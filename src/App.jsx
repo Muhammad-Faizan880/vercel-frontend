@@ -10,9 +10,9 @@ import ProtectedRoute from "./routes/protectedRoutes";
 import Otp from "./auth/otp";
 import Chat from "./pages/chat";
 import Cart from "./pages/cart";           
-import Checkout from "./pages/Checkout";   
-import Payment from "./pages/Payment";     
-import PaymentSuccess from "./pages/PaymentSuccess";
+import Checkout from "./pages/checkout";   
+import Payment from "./pages/payment";     
+import PaymentSuccess from "./pages/paymentSuccess";
 import FloatingCartButton from "./components/floatingCartButton"; 
 
 // token check helper
