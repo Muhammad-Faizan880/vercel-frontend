@@ -39,7 +39,7 @@ const Home = () => {
 
   // Fetch Products
   const fetchProducts = async () => {
-    try {
+    try { 
       setIsLoading(true);
       const response = await axios.get("/products", {
         params: {
@@ -140,6 +140,7 @@ const Home = () => {
           </div>
         </div>
       </nav>
+     
 
       {/* HERO SECTION - RESPONSIVE */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-8 sm:py-12">

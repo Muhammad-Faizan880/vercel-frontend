@@ -6,6 +6,7 @@ import {
   ShoppingCart, ArrowLeft, Heart, Minus, Plus, AlertCircle, Check,
   Truck, Shield, Clock, RotateCcw, MapPin, Calendar, CreditCard
 } from "lucide-react";
+import axios from "../api/axios";
 
 const ProductDetail = () => {
   const [product, setProduct] = useState(null);
@@ -27,7 +28,7 @@ const ProductDetail = () => {
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:5000/api/products/${id}`);
+        const response = await axios.fetch(`/api/products/${id}`);
         if (!response.ok) throw new Error("Failed to fetch");
         const data = await response.json();
         
