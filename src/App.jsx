@@ -1,5 +1,6 @@
 import "./index.css";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { useContext } from "react";
 import Home from "./pages/landing";
 import AddEditProduct from "./pages/addEditProduct";
 import ProductDetail from "./pages/productDetail";
@@ -9,11 +10,14 @@ import Signup from "./auth/register";
 import ProtectedRoute from "./routes/protectedRoutes";
 import Otp from "./auth/otp";
 import Chat from "./pages/chat";
-import Cart from "./pages/cart";           
-import Checkout from "./pages/checkout";   
-import Payment from "./pages/payment";     
+import Cart from "./pages/cart";
+import Checkout from "./pages/checkout";
+import Payment from "./pages/payment";
 import PaymentSuccess from "./pages/paymentSuccess";
-import FloatingCartButton from "./components/floatingCartButton"; 
+import FloatingCartButton from "./components/floatingCartButton";
+import AdminDashboard from "./pages/AdminDashboard";
+import { AuthContext } from "./context/authContext";
+import ForgotPassword from "./auth/forgotPassword";
 
 // token check helper
 const isAuth = () => {
@@ -23,16 +27,37 @@ const isAuth = () => {
 // Public Route Guard
 const PublicRoute = ({ children }) => {
   if (isAuth()) {
-    return <Navigate to="/" replace />;  
+    return <Navigate to="/" replace />;
   }
   return children;
+};
+
+// ✅ Conditional Cart Button - Role based (works with your authContext)
+const ConditionalFloatingCartButton = () => {
+  const { user } = useContext(AuthContext);
+  const location = useLocation();
+  const path = location.pathname;
+
+  // Admin routes
+  const adminRoutes = ["/admin", "/add", "/editPage"];
+  const isAdminRoute = adminRoutes.some((route) => path.startsWith(route));
+
+  // ❌ Don't show cart button if:
+  // 1. User is admin, OR
+  // 2. Route is admin route
+  if (user?.role === "admin" || isAdminRoute) {
+    return null;
+  }
+
+  // ✅ Show cart button only for normal users
+  return <FloatingCartButton />;
 };
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public Routes (blocked if logged in) */}
+        {/* Public Routes */}
         <Route
           path="/login"
           element={
@@ -41,7 +66,6 @@ function App() {
             </PublicRoute>
           }
         />
-
         <Route
           path="/register"
           element={
@@ -50,7 +74,6 @@ function App() {
             </PublicRoute>
           }
         />
-
         <Route
           path="/otp"
           element={
@@ -60,16 +83,25 @@ function App() {
           }
         />
 
-        {/* 🔐 Protected Routes */}
-        <Route
-          path="/"
+           <Route
+          path="/forgot-password"
           element={
-            <ProtectedRoute>
-              <Home />
-            </ProtectedRoute>
+            <PublicRoute>
+              <ForgotPassword />
+            </PublicRoute>
           }
         />
 
+
+        {/* Admin Routes - NO cart button on these */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute adminOnly={true}>
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/add"
           element={
@@ -78,16 +110,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
-        <Route
-          path="/productDetail/:id"
-          element={
-            <ProtectedRoute>
-              <ProductDetail />
-            </ProtectedRoute>
-          }
-        />
-
         <Route
           path="/editPage/:id"
           element={
@@ -97,6 +119,23 @@ function App() {
           }
         />
 
+        {/* User Routes - Cart button will show on these */}
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Home />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/productDetail/:id"
+          element={
+            <ProtectedRoute>
+              <ProductDetail />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/chat"
           element={
@@ -105,8 +144,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
-        {/* 🛒 Cart & Checkout Routes */}
         <Route
           path="/cart"
           element={
@@ -115,7 +152,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/checkout"
           element={
@@ -124,7 +160,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/payment"
           element={
@@ -133,7 +168,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/payment-success"
           element={
@@ -143,12 +177,12 @@ function App() {
           }
         />
 
-        {/* Catch-all route for undefined paths */}
+        {/* Catch-all route */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      
-      {/* ✅ FloatingCartButton - Shows on all pages when user is logged in */}
-      <FloatingCartButton />
+
+      {/* ✅ FloatingCartButton - Shows ONLY on user routes, NOT on admin routes */}
+      <ConditionalFloatingCartButton />
     </BrowserRouter>
   );
 }

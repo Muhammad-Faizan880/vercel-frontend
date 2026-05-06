@@ -1,4 +1,4 @@
-// ProductDetail.jsx - FULLY WORKING WITH DYNAMIC STOCK & DELIVERY MODULES
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
@@ -6,7 +6,7 @@ import {
   ShoppingCart, ArrowLeft, Heart, Minus, Plus, AlertCircle, Check,
   Truck, Shield, Clock, RotateCcw, MapPin, Calendar, CreditCard
 } from "lucide-react";
-import axios from "../api/axios";
+import apiClient from "../api/axios"; 
 
 const ProductDetail = () => {
   const [product, setProduct] = useState(null);
@@ -28,30 +28,26 @@ const ProductDetail = () => {
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        const response = await axios.fetch(`/api/products/${id}`);
-        if (!response.ok) throw new Error("Failed to fetch");
-        const data = await response.json();
-        
-        console.log("Fetched product:", data);
-        
-        setProduct(data);
+        const response = await apiClient.get(`/products/${id}`);
+        console.log("Fetched product:", response.data);
+        setProduct(response.data);
         
         // Extract variants correctly
         let variantsArray = [];
-        if (data.variantsList && Array.isArray(data.variantsList)) {
-          variantsArray = data.variantsList;
-        } else if (Array.isArray(data.variants)) {
-          variantsArray = data.variants;
-        } else if (typeof data.variants === 'object' && data.variants !== null) {
-          Object.keys(data.variants).forEach(size => {
-            variantsArray.push(...data.variants[size]);
+        if (response.data.variantsList && Array.isArray(response.data.variantsList)) {
+          variantsArray = response.data.variantsList;
+        } else if (Array.isArray(response.data.variants)) {
+          variantsArray = response.data.variants;
+        } else if (typeof response.data.variants === 'object' && response.data.variants !== null) {
+          Object.keys(response.data.variants).forEach(size => {
+            variantsArray.push(...response.data.variants[size]);
           });
         }
         
         console.log("Variants array:", variantsArray);
         setVariants(variantsArray);
         
-        const mainImageUrl = `http://localhost:5000${data.image}`;
+        const mainImageUrl = `http://localhost:5000${response.data.image}`;
         setCurrentImage(mainImageUrl);
         
         if (variantsArray.length > 0) {
@@ -98,7 +94,7 @@ const ProductDetail = () => {
         
         setCurrentImage(newImageUrl);
         
-        // ✅ FIX: Reset quantity if current quantity exceeds stock
+        // Reset quantity if current quantity exceeds stock
         if (quantity > variant.stock && variant.stock > 0) {
           setQuantity(1);
         } else if (variant.stock === 0) {
@@ -152,7 +148,7 @@ const ProductDetail = () => {
     setSelectedColor(colorName);
   };
 
-  // ✅ UPDATE QUANTITY WITH STOCK CHECK
+  // UPDATE QUANTITY WITH STOCK CHECK
   const updateQuantity = (newQuantity) => {
     if (!selectedVariant) return;
     
@@ -210,7 +206,7 @@ const ProductDetail = () => {
     navigate("/cart");
   };
 
-  // ✅ Check delivery availability
+  // Check delivery availability
   const checkDeliveryAvailability = () => {
     if (!deliveryPinCode || deliveryPinCode.length < 3) {
       toast.error("Please enter a valid PIN code");
@@ -275,7 +271,7 @@ const ProductDetail = () => {
               <ArrowLeft className="w-5 h-5" />
               <span>Back</span>
             </button>
-            <h1 className="text-xl font-bold text-gray-800">Product Details</h1>
+            <h1 className="text-xl font-bold text-gray-800">Product Detail Page</h1>
             <div className="w-20"></div>
           </div>
         </div>
@@ -392,7 +388,7 @@ const ProductDetail = () => {
               )}
             </div>
 
-            {/* ✅ QUANTITY WITH DYNAMIC STOCK UPDATE */}
+            {/* QUANTITY WITH DYNAMIC STOCK UPDATE */}
             {!isOutOfStock && (
               <div className="space-y-3">
                 <h3 className="font-semibold text-gray-900">Quantity</h3>
@@ -418,10 +414,6 @@ const ProductDetail = () => {
                 </div>
               </div>
             )}
-
-        
-
-         
 
             {/* Buttons */}
             <div className="flex gap-4 pt-4">
@@ -449,7 +441,7 @@ const ProductDetail = () => {
               </button>
             </div>
 
-                     {/* ✅ BENEFITS MODULE */}
+            {/* BENEFITS MODULE */}
             <div className="border-t pt-4 grid grid-cols-2 gap-3">
               <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
                 <Shield className="w-4 h-4 text-green-600" />
@@ -469,11 +461,6 @@ const ProductDetail = () => {
               </div>
             </div>
           </div>
-
-
-
-
-    
         </div>
       </main>
     </div>

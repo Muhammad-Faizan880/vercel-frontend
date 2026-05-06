@@ -2,15 +2,26 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
-import { 
-  ArrowLeft, Truck, CreditCard, MapPin, Phone, Mail, User, 
-  DollarSign, Package, Minus, Plus, Trash2, ShieldCheck
+import {
+  ArrowLeft,
+  Truck,
+  CreditCard,
+  MapPin,
+  Phone,
+  Mail,
+  User,
+  DollarSign,
+  Package,
+  Minus,
+  Plus,
+  Trash2,
+  ShieldCheck,
 } from "lucide-react";
 
 const Checkout = () => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [shippingRate, setShippingRate] = useState(5.99); // Fixed shipping rate
+  const [shippingRate, setShippingRate] = useState(5.99);
   const navigate = useNavigate();
 
   // Shipping address state
@@ -37,7 +48,7 @@ const Checkout = () => {
 
   // Calculate subtotal
   const calculateSubtotal = () => {
-    return cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    return cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   };
 
   // Calculate total with shipping
@@ -53,7 +64,7 @@ const Checkout = () => {
       toast.error(`Only ${item.stock} items available`);
       return;
     }
-    
+
     const updated = [...cartItems];
     updated[index].quantity = newQuantity;
     setCartItems(updated);
@@ -66,27 +77,19 @@ const Checkout = () => {
     setCartItems(updated);
     localStorage.setItem("cart", JSON.stringify(updated));
     toast.success("Item removed");
-    
+
     if (updated.length === 0) {
       navigate("/");
     }
   };
 
-  // Handle address change
-  // const handleAddressChange = (e) => {
-  //   setShippingAddress({
-  //     ...shippingAddress,
-  //     [e.target.name]: e.target.value
-  //   });
-  // };
-
   const handleAddressChange = (e) => {
-  const { name, value } = e.target;
-  setShippingAddress(prev => ({
-    ...prev,
-    [name]: value
-  }));
-};
+    const { name, value } = e.target;
+    setShippingAddress((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
   // Validate form before proceeding to payment
   const validateForm = () => {
@@ -120,13 +123,13 @@ const Checkout = () => {
   // Proceed to Stripe payment
   const handleProceedToPayment = async () => {
     if (!validateForm()) return;
-    
+
     setLoading(true);
-    
+
     // Save shipping address to localStorage for payment page
     localStorage.setItem("shippingAddress", JSON.stringify(shippingAddress));
     localStorage.setItem("orderTotal", JSON.stringify(calculateTotal()));
-    
+
     // Navigate to payment page (where Stripe will be integrated)
     navigate("/payment");
   };
@@ -141,13 +144,13 @@ const Checkout = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Toaster position="top-center" />
-      
+
       {/* Header */}
       <nav className="sticky top-0 z-50 bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between items-center h-16">
-            <button 
-              onClick={() => navigate("/cart")} 
+            <button
+              onClick={() => navigate("/cart")}
               className="flex items-center gap-2 text-gray-600 hover:text-indigo-600"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -161,7 +164,6 @@ const Checkout = () => {
 
       <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid lg:grid-cols-3 gap-8">
-          
           {/* LEFT COLUMN - Shipping Form */}
           <div className="lg:col-span-2 space-y-6">
             {/* Shipping Information */}
@@ -170,7 +172,7 @@ const Checkout = () => {
                 <Truck className="w-6 h-6 text-indigo-600" />
                 <h2 className="text-xl font-semibold">Shipping Information</h2>
               </div>
-              
+
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -188,7 +190,7 @@ const Checkout = () => {
                     />
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Email *
@@ -205,7 +207,7 @@ const Checkout = () => {
                     />
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Phone Number *
@@ -222,7 +224,7 @@ const Checkout = () => {
                     />
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Address *
@@ -239,7 +241,7 @@ const Checkout = () => {
                     />
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     City *
@@ -253,7 +255,7 @@ const Checkout = () => {
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     State
@@ -267,7 +269,7 @@ const Checkout = () => {
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Zip Code *
@@ -281,41 +283,26 @@ const Checkout = () => {
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
-                
-                {/* <div>
+
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Country
                   </label>
-                  <input
-                    type="text"
+                  <select
                     name="country"
                     value={shippingAddress.country}
                     onChange={handleAddressChange}
-                    placeholder="PK"
-                    className="w-full p-3 border border-gray-300 rounded-lg bg-gray-50"
-                    readOnly
-                  />
-                </div> */}
-
-                <div>
-  <label className="block text-sm font-medium text-gray-700 mb-1">
-    Country
-  </label>
-  <select
-    name="country"
-    value={shippingAddress.country}
-    onChange={handleAddressChange}
-    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
-  >
-    <option value="PK">Pakistan</option>
-    <option value="US">United States</option>
-    <option value="GB">United Kingdom</option>
-    <option value="CA">Canada</option>
-    <option value="AU">Australia</option>
-    <option value="IN">India</option>
-    <option value="AE">United Arab Emirates</option>
-  </select>
-</div>
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+                  >
+                    <option value="PK">Pakistan</option>
+                    <option value="US">United States</option>
+                    <option value="GB">United Kingdom</option>
+                    <option value="CA">Canada</option>
+                    <option value="AU">Australia</option>
+                    <option value="IN">India</option>
+                    <option value="AE">United Arab Emirates</option>
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -325,7 +312,7 @@ const Checkout = () => {
                 <CreditCard className="w-6 h-6 text-indigo-600" />
                 <h2 className="text-xl font-semibold">Payment Method</h2>
               </div>
-              
+
               <div className="border rounded-lg p-4 bg-gray-50">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-8 bg-blue-600 rounded flex items-center justify-center">
@@ -333,16 +320,30 @@ const Checkout = () => {
                   </div>
                   <div>
                     <p className="font-medium">Credit / Debit Card</p>
-                    <p className="text-sm text-gray-500">Pay securely with Stripe</p>
+                    <p className="text-sm text-gray-500">
+                      Pay securely with Stripe
+                    </p>
                   </div>
                   <ShieldCheck className="w-5 h-5 text-green-600 ml-auto" />
                 </div>
               </div>
-              
+
               <div className="mt-4 flex gap-2 text-xs text-gray-500">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/2560px-Visa_Inc._logo.svg.png" className="h-6" alt="Visa" />
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png" className="h-6" alt="Mastercard" />
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/American_Express_logo_%282018%29.svg/1280px-American_Express_logo_%282018%29.svg.png" className="h-6" alt="Amex" />
+                <img
+                  src="https://static.cdnlogo.com/logos/v/99/visa.svg"
+                  className="h-6 w-auto"
+                  alt="Visa"
+                />
+                <img
+                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/1280px-Mastercard-logo.svg.png"
+                  className="h-6"
+                  alt="Mastercard"
+                />
+                <img
+                  src="https://upload.wikimedia.org/wikipedia/commons/3/30/American_Express_logo.svg"
+                  className="h-6 w-auto"
+                  alt="Amex"
+                />
               </div>
             </div>
           </div>
@@ -354,33 +355,41 @@ const Checkout = () => {
                 <Package className="w-6 h-6 text-indigo-600" />
                 <h2 className="text-xl font-semibold">Order Summary</h2>
               </div>
-              
+
               {/* Cart Items */}
               <div className="space-y-3 max-h-80 overflow-y-auto mb-4">
                 {cartItems.map((item, index) => (
                   <div key={index} className="flex gap-3 pb-3 border-b">
-                    <img 
+                    <img
                       src={`http://localhost:5000${item.image}`}
                       alt={item.productName}
                       className="w-16 h-16 object-cover rounded"
-                      onError={(e) => e.target.src = "/api/placeholder/64/64"}
+                      onError={(e) => (e.target.src = "/api/placeholder/64/64")}
                     />
                     <div className="flex-1">
-                      <p className="font-semibold text-sm">{item.productName}</p>
+                      <p className="font-semibold text-sm">
+                        {item.productName}
+                      </p>
                       <p className="text-xs text-gray-500">
                         Size: {item.size} | Color: {item.color}
                       </p>
                       <div className="flex items-center justify-between mt-1">
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => updateQuantity(index, item.quantity - 1)}
+                            onClick={() =>
+                              updateQuantity(index, item.quantity - 1)
+                            }
                             className="w-6 h-6 border rounded flex items-center justify-center hover:bg-gray-100"
                           >
                             <Minus className="w-3 h-3" />
                           </button>
-                          <span className="text-sm w-8 text-center">{item.quantity}</span>
+                          <span className="text-sm w-8 text-center">
+                            {item.quantity}
+                          </span>
                           <button
-                            onClick={() => updateQuantity(index, item.quantity + 1)}
+                            onClick={() =>
+                              updateQuantity(index, item.quantity + 1)
+                            }
                             className="w-6 h-6 border rounded flex items-center justify-center hover:bg-gray-100"
                           >
                             <Plus className="w-3 h-3" />
@@ -400,14 +409,17 @@ const Checkout = () => {
                   </div>
                 ))}
               </div>
-              
+
               {/* Price Breakdown */}
               <div className="space-y-3 pt-4 border-t">
                 <div className="flex justify-between text-gray-600">
-                  <span>Subtotal ({cartItems.reduce((sum, i) => sum + i.quantity, 0)} items)</span>
+                  <span>
+                    Subtotal (
+                    {cartItems.reduce((sum, i) => sum + i.quantity, 0)} items)
+                  </span>
                   <span>${subtotal.toFixed(2)}</span>
                 </div>
-                
+
                 <div className="flex justify-between text-gray-600">
                   <div className="flex items-center gap-1">
                     <Truck className="w-4 h-4" />
@@ -415,7 +427,7 @@ const Checkout = () => {
                   </div>
                   <span>${shippingRate.toFixed(2)}</span>
                 </div>
-                
+
                 <div className="border-t pt-3">
                   <div className="flex justify-between text-lg font-bold">
                     <span>Total</span>
@@ -426,7 +438,7 @@ const Checkout = () => {
                   </p>
                 </div>
               </div>
-              
+
               {/* Checkout Button */}
               <button
                 onClick={handleProceedToPayment}
@@ -434,9 +446,10 @@ const Checkout = () => {
                 className={`
                   w-full mt-6 py-4 rounded-xl font-semibold text-lg flex items-center justify-center gap-2
                   transition-all duration-200
-                  ${!loading && cartItems.length > 0
-                    ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:shadow-lg"
-                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  ${
+                    !loading && cartItems.length > 0
+                      ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:shadow-lg"
+                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
                   }
                 `}
               >
@@ -452,7 +465,7 @@ const Checkout = () => {
                   </>
                 )}
               </button>
-              
+
               <p className="text-xs text-center text-gray-400 mt-4">
                 By proceeding, you agree to our Terms & Conditions
               </p>

@@ -1,11 +1,16 @@
 // ProductForm.jsx
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import axios from "../api/axios";
 import { AuthContext } from "../context/authContext";
 
 const ProductForm = () => {
   const { token } = useContext(AuthContext);
+  const { id } = useParams(); // Get product ID from URL for edit mode
+  const navigate = useNavigate();
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // Product basic info
   const [form, setForm] = useState({
@@ -16,16 +21,81 @@ const ProductForm = () => {
   });
 
   const [preview, setPreview] = useState(null);
+  const [existingImage, setExistingImage] = useState(null);
 
   // Variants state - Now supporting multiple colors per size
   const [variants, setVariants] = useState([]);
 
   // Form for adding new variant
   const [size, setSize] = useState("");
-  const [colors, setColors] = useState([]); // Multiple colors array
+  const [colors, setColors] = useState([]);
   const [colorName, setColorName] = useState("");
   const [colorHex, setColorHex] = useState("#000000");
   const [colorStock, setColorStock] = useState("");
+
+  // Check if we're in edit mode
+  useEffect(() => {
+    if (id) {
+      setIsEditMode(true);
+      fetchProductDetails();
+    }
+  }, [id]);
+
+  // Fetch product details for edit mode
+  const fetchProductDetails = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`/products/${id}`);
+      const product = response.data;
+
+      // Set basic info
+      setForm({
+        name: product.name,
+        description: product.description,
+        price: product.price,
+        image: null,
+      });
+
+      if (product.image) {
+        setExistingImage(product.image);
+        setPreview(`http://localhost:5000${product.image}`);
+      }
+
+      // Transform variants data
+      if (product.variants && product.variants.length > 0) {
+        // Group variants by size
+        const groupedVariants = {};
+        product.variants.forEach(variant => {
+          if (!groupedVariants[variant.size]) {
+            groupedVariants[variant.size] = {
+              size: variant.size,
+              colors: [],
+              totalStock: 0
+            };
+          }
+          
+          groupedVariants[variant.size].colors.push({
+            name: variant.color.name,
+            hex: variant.color.hex,
+            stock: variant.stock,
+            image: variant.image || null,
+            preview: variant.image ? `http://localhost:5000${variant.image}` : null,
+            _id: variant._id
+          });
+          
+          groupedVariants[variant.size].totalStock += variant.stock;
+        });
+
+        setVariants(Object.values(groupedVariants));
+      }
+
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching product:", error);
+      toast.error("Failed to load product details");
+      setLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -36,6 +106,7 @@ const ProductForm = () => {
     if (file) {
       setForm({ ...form, image: file });
       setPreview(URL.createObjectURL(file));
+      setExistingImage(null); // Clear existing image if new one is uploaded
     }
   };
 
@@ -62,7 +133,7 @@ const ProductForm = () => {
     setColorStock("");
   };
 
-  // Handle color image upload - FIXED VERSION
+  // Handle color image upload
   const handleColorImage = (file, index) => {
     if (!file) return;
     
@@ -70,6 +141,16 @@ const ProductForm = () => {
     updated[index].image = file;
     updated[index].preview = URL.createObjectURL(file);
     setColors(updated);
+  };
+
+  // Handle color image upload for existing variants
+  const handleExistingColorImage = (file, variantIndex, colorIndex) => {
+    if (!file) return;
+    
+    const updatedVariants = [...variants];
+    updatedVariants[variantIndex].colors[colorIndex].image = file;
+    updatedVariants[variantIndex].colors[colorIndex].preview = URL.createObjectURL(file);
+    setVariants(updatedVariants);
   };
 
   // Remove color from current size
@@ -102,7 +183,7 @@ const ProductForm = () => {
       ...variants,
       {
         size: size,
-        colors: colors.map(c => ({ ...c })), // Deep copy
+        colors: colors.map(c => ({ ...c })),
         totalStock: colors.reduce((sum, c) => sum + c.stock, 0),
       },
     ]);
@@ -120,6 +201,24 @@ const ProductForm = () => {
     setVariants(updated);
   };
 
+  // Remove a specific color from a variant
+  const removeColorFromVariant = (variantIndex, colorIndex) => {
+    const updatedVariants = [...variants];
+    updatedVariants[variantIndex].colors.splice(colorIndex, 1);
+    
+    // Update total stock
+    updatedVariants[variantIndex].totalStock = updatedVariants[variantIndex].colors.reduce(
+      (sum, c) => sum + c.stock, 0
+    );
+    
+    // Remove variant if no colors left
+    if (updatedVariants[variantIndex].colors.length === 0) {
+      updatedVariants.splice(variantIndex, 1);
+    }
+    
+    setVariants(updatedVariants);
+  };
+
   // Update stock for a specific color in a variant
   const updateColorStock = (variantIndex, colorIndex, newStock) => {
     const updatedVariants = [...variants];
@@ -130,14 +229,19 @@ const ProductForm = () => {
     setVariants(updatedVariants);
   };
 
-  // Submit product
+  // Submit product (Add or Update)
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     const { name, description, price, image } = form;
 
-    if (!name || !description || !price || !image) {
+    if (!name || !description || !price) {
       toast.error("Please fill all required fields");
+      return;
+    }
+
+    if (!image && !existingImage && !isEditMode) {
+      toast.error("Please add a product image");
       return;
     }
 
@@ -151,7 +255,11 @@ const ProductForm = () => {
       formData.append("name", name);
       formData.append("description", description);
       formData.append("price", Number(price));
-      formData.append("image", image);
+      
+      // Only append image if a new one is selected
+      if (image) {
+        formData.append("image", image);
+      }
 
       const apiVariants = [];
 
@@ -164,26 +272,39 @@ const ProductForm = () => {
               hex: color.hex,
             },
             stock: color.stock,
-            colorIndex: colorIndex // Track which color this belongs to
+            colorIndex: colorIndex,
+            _id: color._id // Include _id for existing colors
           });
 
-          // Append color image if exists
-          if (color.image) {
-            formData.append(`colorImage_${variant.size}_${color.name}`, color.image);
+          // Append color image if new image is uploaded
+          if (color.image && typeof color.image !== 'string') {
+            formData.append(`colorImage_${variant.size}_${color.name}_${colorIndex}`, color.image);
           }
         });
       });
 
       formData.append("variants", JSON.stringify(apiVariants));
 
-      await axios.post("/products", formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        
-        },
-      });
-
-      toast.success("Product added successfully");
+      let response;
+      if (isEditMode) {
+        // Update existing product
+        response = await axios.put(`/products/${id}`, formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        });
+        toast.success("Product updated successfully");
+      } else {
+        // Create new product
+        response = await axios.post("/products", formData, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        });
+        toast.success("Product added successfully");
+      }
 
       // Reset form
       setForm({
@@ -193,23 +314,49 @@ const ProductForm = () => {
         image: null,
       });
       setPreview(null);
+      setExistingImage(null);
       setVariants([]);
       setColors([]);
       setSize("");
+      
+      // Navigate back to admin dashboard
+      setTimeout(() => {
+        navigate("/admin");
+      }, 1500);
+
     } catch (error) {
       console.error(error);
-      toast.error(error?.response?.data?.message || "Failed to add product");
+      toast.error(error?.response?.data?.message || `Failed to ${isEditMode ? "update" : "add"} product`);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex justify-center items-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading product details...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
       <Toaster position="top-center" />
       <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-4xl mx-auto px-4">
-          <h1 className="text-3xl font-bold text-center mb-8 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-            Add New Product
-          </h1>
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              {isEditMode ? "Edit Product" : "Add New Product"}
+            </h1>
+            <button
+              onClick={() => navigate("/admin")}
+              className="text-gray-600 hover:text-gray-800 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 transition"
+            >
+              Back to Dashboard
+            </button>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Basic Information Card */}
@@ -221,7 +368,7 @@ const ProductForm = () => {
               {/* Image Upload */}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Product Image *
+                  Product Image {!isEditMode && "*"}
                 </label>
                 <input
                   type="file"
@@ -243,7 +390,12 @@ const ProductForm = () => {
                   ) : (
                     <div className="text-center">
                       <div className="text-4xl mb-2">📸</div>
-                      <p className="text-gray-500">Click to upload image</p>
+                      <p className="text-gray-500">
+                        {isEditMode ? "Click to change image" : "Click to upload image"}
+                      </p>
+                      {existingImage && !preview && (
+                        <p className="text-xs text-gray-400 mt-1">Current image will be kept</p>
+                      )}
                     </div>
                   )}
                 </label>
@@ -467,7 +619,7 @@ const ProductForm = () => {
                           {variant.colors.map((color, cIdx) => (
                             <div
                               key={cIdx}
-                              className="flex items-center gap-3 bg-white p-2 rounded-lg"
+                              className="flex items-center gap-3 bg-white p-2 rounded-lg flex-wrap"
                             >
                               <div
                                 className="w-8 h-8 rounded-full shadow"
@@ -487,13 +639,43 @@ const ProductForm = () => {
                               <span className="text-sm text-gray-500">
                                 items
                               </span>
-                              {color.preview && (
-                                <img
-                                  src={color.preview}
-                                  className="w-8 h-8 rounded object-cover"
-                                  alt={color.name}
+                              
+                              {!color.image && color._id && !color.preview && (
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  id={`color-edit-img-${vIdx}-${cIdx}`}
+                                  onChange={(e) =>
+                                    handleExistingColorImage(e.target.files[0], vIdx, cIdx)
+                                  }
                                 />
                               )}
+                              
+                              {(!color.image && color._id && !color.preview) ? (
+                                <label
+                                  htmlFor={`color-edit-img-${vIdx}-${cIdx}`}
+                                  className="text-xs bg-indigo-500 text-white px-2 py-1 rounded cursor-pointer"
+                                >
+                                  Upload Img
+                                </label>
+                              ) : (
+                                color.preview && (
+                                  <img
+                                    src={color.preview}
+                                    className="w-8 h-8 rounded object-cover"
+                                    alt={color.name}
+                                  />
+                                )
+                              )}
+                              
+                              <button
+                                type="button"
+                                onClick={() => removeColorFromVariant(vIdx, cIdx)}
+                                className="text-red-500 ml-1 hover:text-red-700"
+                              >
+                                Remove
+                              </button>
                             </div>
                           ))}
                         </div>
@@ -513,7 +695,7 @@ const ProductForm = () => {
               type="submit"
               className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-4 rounded-xl font-semibold text-lg hover:shadow-lg transition-all"
             >
-              Create Product
+              {isEditMode ? "Update Product" : "Create Product"}
             </button>
           </form>
         </div>

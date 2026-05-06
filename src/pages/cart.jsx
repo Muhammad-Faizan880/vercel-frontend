@@ -121,8 +121,8 @@ const Cart = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <ShoppingBag className="w-20 h-20 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Your cart is empty</h2>
-          <p className="text-gray-500 mb-6">Looks like you haven't added any items yet</p>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Your cart is empty.</h2>
+          <p className="text-gray-500 mb-6">Looks like you haven't added any items yet.</p>
           <button 
             onClick={() => navigate("/")}
             className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-indigo-700"
@@ -269,7 +269,7 @@ const Cart = () => {
               
               <button
                 onClick={() => navigate("/")}
-                className="w-full mt-3 text-indigo-600 py-2 rounded-lg font-medium hover:text-indigo-700 transition-colors"
+                className="w-full mt-3 text-indigo-600 py-2 rounded-lg font-medium hover:text-indigo-700 transition-colors border border-indigo-100"
               >
                 Continue Shopping
               </button>

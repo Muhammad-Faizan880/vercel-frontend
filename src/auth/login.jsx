@@ -17,47 +17,47 @@ const Login = () => {
   const navigate = useNavigate();
   const { login } = useContext(AuthContext);
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  try {
-    const res = await fetch("http://localhost:5000/api/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: form.email,
-        password: form.password,
-      }),
-    });
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: form.email,
+          password: form.password,
+        }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    console.log("API RESPONSE:", data);
+      console.log("API RESPONSE:", data);
 
-    if (!res.ok) {
-      toast.error(data.message || "Login failed");
-      return;
+      if (!res.ok) {
+        toast.error(data.message || "Login failed");
+        return;
+      }
+
+      // ✅ Save token once
+      localStorage.setItem("token", data.token);
+
+      // ✅ Save user
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      // ✅ If using context login
+      login(data.token);
+
+      toast.success("Login successful");
+
+      navigate("/");
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Server not responding");
     }
-
-    // ✅ Save token once
-    localStorage.setItem("token", data.token);
-
-    // ✅ Save user
-    localStorage.setItem("user", JSON.stringify(data.user));
-
-    // ✅ If using context login
-    login(data.token);
-
-    toast.success("Login successful");
-
-    navigate("/");
-  } catch (error) {
-    console.error("Error:", error);
-    toast.error("Server not responding");
-  }
-};
+  };
 
   return (
     <>
@@ -95,6 +95,16 @@ const Login = () => {
                 placeholder="Enter your password"
                 className="w-full mt-1 px-4 py-3 rounded-lg bg-gray-800 text-white outline-none focus:ring-2 focus:ring-blue-500"
               />
+            </div>
+
+            {/* Forgot Password Link */}
+            <div className="text-right">
+              <Link
+                to="/forgot-password"
+                className="text-sm text-blue-500 hover:text-blue-400 hover:underline transition"
+              >
+                Forgot Password?
+              </Link>
             </div>
 
             {/* Button */}

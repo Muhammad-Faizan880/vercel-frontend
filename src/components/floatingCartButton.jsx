@@ -36,7 +36,7 @@ const FloatingCartButton = () => {
       const variantIds = cart.map(item => item.variantId);
       
       try {
-        const response = await axios.post("/api/cart/validate", {
+        const response = await axios.post("/cart/validate", {
           variantIds: variantIds
         });
         
