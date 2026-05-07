@@ -1,5 +1,11 @@
 import "./index.css";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
 import { useContext } from "react";
 import Home from "./pages/landing";
 import AddEditProduct from "./pages/addEditProduct";
@@ -18,6 +24,7 @@ import FloatingCartButton from "./components/floatingCartButton";
 import AdminDashboard from "./pages/AdminDashboard";
 import { AuthContext } from "./context/authContext";
 import ForgotPassword from "./auth/forgotPassword";
+import ResetPassword from "./auth/resetPassword";
 
 // token check helper
 const isAuth = () => {
@@ -83,7 +90,7 @@ function App() {
           }
         />
 
-           <Route
+        <Route
           path="/forgot-password"
           element={
             <PublicRoute>
@@ -92,6 +99,14 @@ function App() {
           }
         />
 
+        <Route
+          path="/reset-password"
+          element={
+            <PublicRoute>
+              <ResetPassword />
+            </PublicRoute>
+          }
+        />
 
         {/* Admin Routes - NO cart button on these */}
         <Route
